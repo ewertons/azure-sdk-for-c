@@ -226,6 +226,8 @@ static int on_message_received(
     int topicLen,
     MQTTClient_message* message)
 {
+  (void)context;
+  (void)topicLen;
   int i;
   char* payloadptr;
   printf("Message arrived\n");
