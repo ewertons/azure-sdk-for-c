@@ -146,6 +146,11 @@ static void create_and_configure_mqtt_client(az_iot_hub_client* hub_client, az_s
   }
 }
 
+static void logTrace(enum MQTTCLIENT_TRACE_LEVELS level, char* message)
+{
+  IOT_SAMPLE_LOG_SUCCESS("[%d] %s", level, message);
+}
+
 static void connect_mqtt_clients_to_iot_hub()
 {
   generate_user_name(env_vars.hub_hostname, subscriber_device_id, AZ_SPAN_FROM_BUFFER(mqtt_client_sub_username_buffer));
@@ -186,6 +191,9 @@ static void connect_mqtt_client_to_iot_hub(
     mqtt_ssl_options.trustStore = (char*)az_span_ptr(env_vars.x509_trust_pem_file_path);
   }
   mqtt_connect_options.ssl = &mqtt_ssl_options;
+
+  MQTTClient_setTraceLevel(MQTTCLIENT_TRACE_MAXIMUM);
+  MQTTClient_setTraceCallback(logTrace);
 
   // Connect MQTT client to the Azure IoT Hub.
   rc = MQTTClient_connect(mqtt_client, &mqtt_connect_options);
