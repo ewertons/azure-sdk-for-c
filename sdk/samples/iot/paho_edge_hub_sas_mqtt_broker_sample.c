@@ -66,9 +66,9 @@ static void generate_user_name(
     az_span iot_hub_hostname,
     az_span device_id,
     az_span username);
-static void generate_sas_key(az_iot_hub_client* hub_client, az_span mqtt_pasword);
+static void generate_sas_key(az_iot_hub_client* hub_client, az_span sas_key, az_span mqtt_password);
 
-/*
+    /*
  * This sample sends five telemetry messages to the Azure IoT Hub. SAS authentication is used.
  */
 int main(void)
@@ -149,13 +149,16 @@ static void create_and_configure_mqtt_client(az_iot_hub_client* hub_client, az_s
 static void connect_mqtt_clients_to_iot_hub()
 {
   generate_user_name(env_vars.hub_hostname, subscriber_device_id, AZ_SPAN_FROM_BUFFER(mqtt_client_sub_username_buffer));
-  generate_sas_key(&sub_hub_client, AZ_SPAN_FROM_BUFFER(subscriber_mqtt_password_buffer));
+  generate_sas_key(&sub_hub_client, env_vars.subscriber_sas_key, AZ_SPAN_FROM_BUFFER(subscriber_mqtt_password_buffer));
   IOT_SAMPLE_LOG_SUCCESS("Subscriber Client generated SAS Key.");
   connect_mqtt_client_to_iot_hub(
       mqtt_sub_client, mqtt_client_sub_username_buffer, subscriber_mqtt_password_buffer);
 
   generate_user_name(env_vars.hub_hostname, publisher_device_id, AZ_SPAN_FROM_BUFFER(mqtt_client_pub_username_buffer));
-  generate_sas_key(&pub_hub_client, AZ_SPAN_FROM_BUFFER(publisher_mqtt_password_buffer));
+  generate_sas_key(
+      &pub_hub_client,
+      env_vars.publisher_sas_key,
+      AZ_SPAN_FROM_BUFFER(publisher_mqtt_password_buffer));
   IOT_SAMPLE_LOG_SUCCESS("Publisher Client generated SAS Key.");
   connect_mqtt_client_to_iot_hub(
       mqtt_pub_client, mqtt_client_pub_username_buffer, publisher_mqtt_password_buffer);
@@ -269,7 +272,7 @@ static void generate_user_name(az_span iot_hub_fqdn, az_span device_id, az_span 
   username = az_span_copy_u8(username, '\0');
 }
 
-static void generate_sas_key(az_iot_hub_client* hub_client, az_span mqtt_password)
+static void generate_sas_key(az_iot_hub_client* hub_client, az_span sas_key, az_span mqtt_password)
 {
   az_result rc;
 
@@ -292,7 +295,7 @@ static void generate_sas_key(az_iot_hub_client* hub_client, az_span mqtt_passwor
   az_span sas_base64_encoded_signed_signature
       = AZ_SPAN_FROM_BUFFER(sas_base64_encoded_signed_signature_buffer);
   iot_sample_generate_sas_base64_encoded_signed_signature(
-      env_vars.hub_sas_key,
+      sas_key,
       sas_signature,
       sas_base64_encoded_signed_signature,
       &sas_base64_encoded_signed_signature);

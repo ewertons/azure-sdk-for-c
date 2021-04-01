@@ -103,6 +103,8 @@ bool get_az_span(az_span* out_span, char const* const error_message, ...);
 
 // DO NOT MODIFY: SAS Key
 #define IOT_SAMPLE_ENV_HUB_SAS_KEY "AZ_IOT_HUB_SAS_KEY"
+#define IOT_SAMPLE_ENV_SUBSCRIBER_SAS_KEY "AZ_IOT_SUB_SAS_KEY"
+#define IOT_SAMPLE_ENV_PUBLISHER_SAS_KEY "AZ_IOT_PUB_SAS_KEY"
 #define IOT_SAMPLE_ENV_PROVISIONING_SAS_KEY "AZ_IOT_PROVISIONING_SAS_KEY"
 #define IOT_SAMPLE_ENV_SAS_KEY_DURATION_MINUTES \
   "AZ_IOT_SAS_KEY_DURATION_MINUTES" // default is 2 hrs.
@@ -123,6 +125,8 @@ char iot_sample_hub_device_id_buffer[64];
 char iot_sample_provisioning_registration_id_buffer[256];
 
 char iot_sample_hub_sas_key_buffer[128];
+char iot_sample_subscriber_sas_key_buffer[128];
+char iot_sample_publisher_sas_key_buffer[128];
 char iot_sample_provisioning_sas_key_buffer[128];
 
 char iot_sample_x509_cert_pem_file_path_buffer[256];
@@ -134,6 +138,8 @@ typedef struct
   az_span hub_hostname;
   az_span edge_hostname;
   az_span hub_sas_key;
+  az_span publisher_sas_key;
+  az_span subscriber_sas_key;
   az_span provisioning_id_scope;
   az_span provisioning_registration_id;
   az_span provisioning_sas_key;
