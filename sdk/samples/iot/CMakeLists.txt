@@ -159,6 +159,16 @@ target_link_libraries(paho_iot_provisioning_sas_sample
     az::iot::sample::common
 )
 
+# Azure IoT Edge MQTT broker (SAS) Sample
+add_executable (paho_edge_hub_sas_mqtt_broker_sample
+  ${CMAKE_CURRENT_LIST_DIR}/paho_edge_hub_sas_mqtt_broker_sample.c
+)
+
+target_link_libraries(paho_edge_hub_sas_mqtt_broker_sample
+  PRIVATE
+    az::iot::sample::common
+)
+
 create_map_file(paho_iot_provisioning_sas_sample paho_iot_provisioning_sas_sample.map)
 
 endif() # TRANSPORT_PAHO

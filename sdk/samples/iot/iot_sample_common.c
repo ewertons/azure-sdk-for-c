@@ -217,6 +217,78 @@ void iot_sample_read_environment_variables(
         exit(1);
     }
   }
+  else if (type == PAHO_EDGE_HUB)
+  {
+    out_env_vars->edge_hostname = AZ_SPAN_FROM_BUFFER(iot_sample_edge_hostname_buffer);
+    read_configuration_entry(
+        IOT_SAMPLE_ENV_EDGE_HOSTNAME,
+        NULL,
+        show_value,
+        out_env_vars->edge_hostname,
+        &(out_env_vars->edge_hostname));
+
+    switch (name)
+    {
+      case PAHO_IOT_HUB_C2D_SAMPLE:
+      case PAHO_IOT_HUB_METHODS_SAMPLE:
+      case PAHO_IOT_HUB_PNP_COMPONENT_SAMPLE:
+      case PAHO_IOT_HUB_PNP_SAMPLE:
+      case PAHO_IOT_HUB_TELEMETRY_SAMPLE:
+      case PAHO_IOT_HUB_TWIN_SAMPLE:
+        out_env_vars->hub_device_id = AZ_SPAN_FROM_BUFFER(iot_sample_hub_device_id_buffer);
+        read_configuration_entry(
+            IOT_SAMPLE_ENV_HUB_DEVICE_ID,
+            NULL,
+            show_value,
+            out_env_vars->hub_device_id,
+            &(out_env_vars->hub_device_id));
+
+        out_env_vars->x509_cert_pem_file_path
+            = AZ_SPAN_FROM_BUFFER(iot_sample_x509_cert_pem_file_path_buffer);
+        read_configuration_entry(
+            IOT_SAMPLE_ENV_DEVICE_X509_CERT_PEM_FILE_PATH,
+            NULL,
+            show_value,
+            out_env_vars->x509_cert_pem_file_path,
+            &(out_env_vars->x509_cert_pem_file_path));
+        break;
+
+      case PAHO_IOT_HUB_SAS_TELEMETRY_SAMPLE:
+        out_env_vars->hub_device_id = AZ_SPAN_FROM_BUFFER(iot_sample_hub_device_id_buffer);
+        read_configuration_entry(
+            IOT_SAMPLE_ENV_HUB_SAS_DEVICE_ID,
+            NULL,
+            show_value,
+            out_env_vars->hub_device_id,
+            &(out_env_vars->hub_device_id));
+
+        out_env_vars->hub_sas_key = AZ_SPAN_FROM_BUFFER(iot_sample_hub_sas_key_buffer);
+        read_configuration_entry(
+            IOT_SAMPLE_ENV_HUB_SAS_KEY,
+            NULL,
+            !show_value,
+            out_env_vars->hub_sas_key,
+            &(out_env_vars->hub_sas_key));
+
+        char duration_buffer[IOT_SAMPLE_SAS_KEY_DURATION_TIME_DIGITS];
+        az_span duration = AZ_SPAN_FROM_BUFFER(duration_buffer);
+        read_configuration_entry(
+            IOT_SAMPLE_ENV_SAS_KEY_DURATION_MINUTES, "120", show_value, duration, &duration);
+
+        az_result rc = az_span_atou32(duration, &(out_env_vars->sas_key_duration_minutes));
+        if (az_result_failed(rc))
+        {
+          IOT_SAMPLE_LOG_ERROR(
+              "Failed to read environment variables: az_result return code 0x%08x.", rc);
+          exit(rc);
+        }
+        break;
+
+      default:
+        IOT_SAMPLE_LOG_ERROR("Failed to read environment variables: Hub sample name undefined.");
+        exit(1);
+    }
+  }
   else if (type == PAHO_IOT_PROVISIONING)
   {
     out_env_vars->provisioning_id_scope
@@ -348,6 +420,24 @@ void iot_sample_create_mqtt_endpoint(
     az_span provisioning_mqtt_endpoint
         = az_span_create((uint8_t*)out_endpoint, (int32_t)endpoint_size);
     az_span remainder = az_span_copy(provisioning_mqtt_endpoint, provisioning_global_endpoint);
+    az_span_copy_u8(remainder, '\0');
+  }
+  else if (type == PAHO_EDGE_HUB)
+  {
+    int32_t const required_size = az_span_size(mqtt_url_prefix)
+        + az_span_size(env_vars->edge_hostname) + az_span_size(mqtt_url_suffix)
+        + (int32_t)sizeof('\0');
+
+    if ((size_t)required_size > endpoint_size)
+    {
+      IOT_SAMPLE_LOG_ERROR("Failed to create MQTT endpoint: Buffer is too small.");
+      exit(1);
+    }
+
+    az_span hub_mqtt_endpoint = az_span_create((uint8_t*)out_endpoint, (int32_t)endpoint_size);
+    az_span remainder = az_span_copy(hub_mqtt_endpoint, mqtt_url_prefix);
+    remainder = az_span_copy(remainder, env_vars->edge_hostname);
+    remainder = az_span_copy(remainder, mqtt_url_suffix);
     az_span_copy_u8(remainder, '\0');
   }
   else

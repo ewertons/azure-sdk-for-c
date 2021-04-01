@@ -92,6 +92,7 @@ bool get_az_span(az_span* out_span, char const* const error_message, ...);
 //
 // DO NOT MODIFY: Service information
 #define IOT_SAMPLE_ENV_HUB_HOSTNAME "AZ_IOT_HUB_HOSTNAME"
+#define IOT_SAMPLE_ENV_EDGE_HOSTNAME "AZ_IOT_EDGE_HOSTNAME"
 #define IOT_SAMPLE_ENV_PROVISIONING_ID_SCOPE "AZ_IOT_PROVISIONING_ID_SCOPE"
 
 // DO NOT MODIFY: Device information
@@ -115,6 +116,7 @@ bool get_az_span(az_span* out_span, char const* const error_message, ...);
 #define IOT_SAMPLE_ENV_DEVICE_X509_TRUST_PEM_FILE_PATH "AZ_IOT_DEVICE_X509_TRUST_PEM_FILE_PATH"
 
 char iot_sample_hub_hostname_buffer[128];
+char iot_sample_edge_hostname_buffer[128];
 char iot_sample_provisioning_id_scope_buffer[16];
 
 char iot_sample_hub_device_id_buffer[64];
@@ -130,6 +132,7 @@ typedef struct
 {
   az_span hub_device_id;
   az_span hub_hostname;
+  az_span edge_hostname;
   az_span hub_sas_key;
   az_span provisioning_id_scope;
   az_span provisioning_registration_id;
@@ -141,12 +144,14 @@ typedef struct
 
 typedef enum
 {
+  PAHO_EDGE_HUB,
   PAHO_IOT_HUB,
   PAHO_IOT_PROVISIONING
 } iot_sample_type;
 
 typedef enum
 {
+  PAHO_EDGE_HUB_SAS_MQTT_BROKER_SAMPLE,
   PAHO_IOT_HUB_C2D_SAMPLE,
   PAHO_IOT_HUB_METHODS_SAMPLE,
   PAHO_IOT_HUB_PNP_COMPONENT_SAMPLE,
