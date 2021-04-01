@@ -175,6 +175,7 @@ static int on_message_received(
     putchar(*payloadptr++);
   }
   putchar('\n');
+  putchar('\n');
   MQTTClient_freeMessage(&message);
   MQTTClient_free(topicName);
   return 1;
