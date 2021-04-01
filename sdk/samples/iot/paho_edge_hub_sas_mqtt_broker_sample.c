@@ -220,9 +220,39 @@ static void connect_mqtt_client_to_iot_hub(
   }
 }
 
+static int on_message_received(
+    void* context,
+    char* topicName,
+    int topicLen,
+    MQTTClient_message* message)
+{
+  int i;
+  char* payloadptr;
+  printf("Message arrived\n");
+  printf("     topic: %s\n", topicName);
+  printf("   message: ");
+  payloadptr = message->payload;
+  for (i = 0; i < message->payloadlen; i++)
+  {
+    putchar(*payloadptr++);
+  }
+  putchar('\n');
+  MQTTClient_freeMessage(&message);
+  MQTTClient_free(topicName);
+  return 1;
+}
+
 static void subscribe_to_mqtt_topic(void)
 {
-  int rc = MQTTClient_subscribe(mqtt_sub_client, mqtt_topic, mqtt_qos);
+  int rc = MQTTClient_setCallbacks(mqtt_sub_client, NULL, NULL, on_message_received, NULL);
+
+  if (rc != MQTTCLIENT_SUCCESS)
+  {
+    IOT_SAMPLE_LOG_ERROR("Failed setting on_message_received callback: MQTTClient return code %d.", rc);
+    exit(rc);
+  }
+
+  rc = MQTTClient_subscribe(mqtt_sub_client, mqtt_topic, mqtt_qos);
 
   if (rc != MQTTCLIENT_SUCCESS)
   {
