@@ -156,8 +156,41 @@ static void logTrace(enum MQTTCLIENT_TRACE_LEVELS level, char* message)
 }
 #endif
 
+static int on_message_received(
+    void* context,
+    char* topicName,
+    int topicLen,
+    MQTTClient_message* message)
+{
+  (void)context;
+  (void)topicLen;
+  int i;
+  char* payloadptr;
+  printf("Message arrived\n");
+  printf("     topic: %s\n", topicName);
+  printf("   message: ");
+  payloadptr = message->payload;
+  for (i = 0; i < message->payloadlen; i++)
+  {
+    putchar(*payloadptr++);
+  }
+  putchar('\n');
+  MQTTClient_freeMessage(&message);
+  MQTTClient_free(topicName);
+  return 1;
+}
+
 static void connect_mqtt_clients_to_iot_hub()
 {
+  int rc = MQTTClient_setCallbacks(mqtt_sub_client, NULL, NULL, on_message_received, NULL);
+
+  if (rc != MQTTCLIENT_SUCCESS)
+  {
+    IOT_SAMPLE_LOG_ERROR(
+        "Failed setting on_message_received callback: MQTTClient return code %d.", rc);
+    exit(rc);
+  }
+
   generate_user_name(env_vars.hub_hostname, subscriber_device_id, AZ_SPAN_FROM_BUFFER(mqtt_client_sub_username_buffer));
   generate_sas_key(&sub_hub_client, env_vars.subscriber_sas_key, AZ_SPAN_FROM_BUFFER(subscriber_mqtt_password_buffer));
   IOT_SAMPLE_LOG_SUCCESS("Subscriber Client generated SAS Key.");
@@ -220,41 +253,9 @@ static void connect_mqtt_client_to_iot_hub(
   }
 }
 
-static int on_message_received(
-    void* context,
-    char* topicName,
-    int topicLen,
-    MQTTClient_message* message)
-{
-  (void)context;
-  (void)topicLen;
-  int i;
-  char* payloadptr;
-  printf("Message arrived\n");
-  printf("     topic: %s\n", topicName);
-  printf("   message: ");
-  payloadptr = message->payload;
-  for (i = 0; i < message->payloadlen; i++)
-  {
-    putchar(*payloadptr++);
-  }
-  putchar('\n');
-  MQTTClient_freeMessage(&message);
-  MQTTClient_free(topicName);
-  return 1;
-}
-
 static void subscribe_to_mqtt_topic(void)
 {
-  int rc = MQTTClient_setCallbacks(mqtt_sub_client, NULL, NULL, on_message_received, NULL);
-
-  if (rc != MQTTCLIENT_SUCCESS)
-  {
-    IOT_SAMPLE_LOG_ERROR("Failed setting on_message_received callback: MQTTClient return code %d.", rc);
-    exit(rc);
-  }
-
-  rc = MQTTClient_subscribe(mqtt_sub_client, mqtt_topic, mqtt_qos);
+  int rc = MQTTClient_subscribe(mqtt_sub_client, mqtt_topic, mqtt_qos);
 
   if (rc != MQTTCLIENT_SUCCESS)
   {
