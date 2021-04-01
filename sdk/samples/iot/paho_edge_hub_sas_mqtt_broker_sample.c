@@ -98,9 +98,10 @@ static void create_and_configure_mqtt_clients(void)
   iot_sample_read_environment_variables(SAMPLE_TYPE, SAMPLE_NAME, &env_vars);
 
   // Build an MQTT endpoint c-string.
-  char mqtt_endpoint_buffer[128];
+ /* char mqtt_endpoint_buffer[128];
   iot_sample_create_mqtt_endpoint(
-      SAMPLE_TYPE, &env_vars, mqtt_endpoint_buffer, sizeof(mqtt_endpoint_buffer));
+      SAMPLE_TYPE, &env_vars, mqtt_endpoint_buffer, sizeof(mqtt_endpoint_buffer));*/
+  char* mqtt_endpoint_buffer = "tcp://localhost:1883";
 
   create_and_configure_mqtt_client(
       &sub_hub_client, subscriber_device_id, &mqtt_sub_client, mqtt_endpoint_buffer);
