@@ -29,6 +29,8 @@
 #define MAX_TELEMETRY_MESSAGE_COUNT 5
 #define MQTT_TIMEOUT_DISCONNECT_MS (10 * 1000)
 
+// #define ENABLE_PAHO_LOGS
+
 const az_span azure_iot_api_version = AZ_SPAN_LITERAL_FROM_STR("api-version=2018-06-30");
 const char* mqtt_topic = "test_topic";
 const int mqtt_qos = 0;
@@ -40,7 +42,7 @@ static az_iot_hub_client sub_hub_client;
 static MQTTClient mqtt_sub_client;
 static char mqtt_client_sub_username_buffer[128];
 
-const az_span publisher_device_id = AZ_SPAN_LITERAL_FROM_STR("sub_client");
+const az_span publisher_device_id = AZ_SPAN_LITERAL_FROM_STR("pub_client");
 static az_iot_hub_client pub_hub_client;
 static MQTTClient mqtt_pub_client;
 static char mqtt_client_pub_username_buffer[128];
@@ -85,8 +87,8 @@ int main(void)
   send_telemetry_messages_to_iot_hub();
   IOT_SAMPLE_LOG_SUCCESS("Client sent telemetry messages to IoT Hub.");
 
-  disconnect_mqtt_client_from_iot_hub(mqtt_sub_client);
-  disconnect_mqtt_client_from_iot_hub(mqtt_pub_client);
+  disconnect_mqtt_client_from_iot_hub(&mqtt_sub_client);
+  disconnect_mqtt_client_from_iot_hub(&mqtt_pub_client);
   IOT_SAMPLE_LOG_SUCCESS("Clients disconnected from Edge Hub.");
 
   return 0;
@@ -146,10 +148,12 @@ static void create_and_configure_mqtt_client(az_iot_hub_client* hub_client, az_s
   }
 }
 
+#ifdef ENABLE_PAHO_LOGS
 static void logTrace(enum MQTTCLIENT_TRACE_LEVELS level, char* message)
 {
   IOT_SAMPLE_LOG_SUCCESS("[%d] %s", level, message);
 }
+#endif
 
 static void connect_mqtt_clients_to_iot_hub()
 {
@@ -197,8 +201,10 @@ static void connect_mqtt_client_to_iot_hub(
   //}
   mqtt_connect_options.ssl = &mqtt_ssl_options;
 
+#ifdef ENABLE_PAHO_LOGS 
   MQTTClient_setTraceLevel(MQTTCLIENT_TRACE_MAXIMUM);
   MQTTClient_setTraceCallback(logTrace);
+#endif
 
   // Connect MQTT client to the Azure IoT Hub.
   rc = MQTTClient_connect(mqtt_client, &mqtt_connect_options);
