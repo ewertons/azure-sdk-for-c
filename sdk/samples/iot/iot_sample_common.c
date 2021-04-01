@@ -190,22 +190,13 @@ void iot_sample_read_environment_variables(
             out_env_vars->hub_device_id,
             &(out_env_vars->hub_device_id));
 
-        out_env_vars->subscriber_sas_key = AZ_SPAN_FROM_BUFFER(iot_sample_subscriber_sas_key_buffer);
+        out_env_vars->hub_sas_key = AZ_SPAN_FROM_BUFFER(iot_sample_hub_sas_key_buffer);
         read_configuration_entry(
-            IOT_SAMPLE_ENV_SUBSCRIBER_SAS_KEY,
+            IOT_SAMPLE_ENV_HUB_SAS_KEY,
             NULL,
             !show_value,
-            out_env_vars->subscriber_sas_key,
-            &(out_env_vars->subscriber_sas_key));
-
-        out_env_vars->publisher_sas_key
-            = AZ_SPAN_FROM_BUFFER(iot_sample_publisher_sas_key_buffer);
-        read_configuration_entry(
-            IOT_SAMPLE_ENV_PUBLISHER_SAS_KEY,
-            NULL,
-            !show_value,
-            out_env_vars->publisher_sas_key,
-            &(out_env_vars->publisher_sas_key));
+            out_env_vars->hub_sas_key,
+            &(out_env_vars->hub_sas_key));
 
         char duration_buffer[IOT_SAMPLE_SAS_KEY_DURATION_TIME_DIGITS];
         az_span duration = AZ_SPAN_FROM_BUFFER(duration_buffer);
@@ -229,13 +220,22 @@ void iot_sample_read_environment_variables(
             out_env_vars->edge_hostname,
             &(out_env_vars->edge_hostname));
 
-        out_env_vars->hub_sas_key = AZ_SPAN_FROM_BUFFER(iot_sample_hub_sas_key_buffer);
+        out_env_vars->subscriber_sas_key
+            = AZ_SPAN_FROM_BUFFER(iot_sample_subscriber_sas_key_buffer);
         read_configuration_entry(
-            IOT_SAMPLE_ENV_HUB_SAS_KEY,
+            IOT_SAMPLE_ENV_SUBSCRIBER_SAS_KEY,
             NULL,
             !show_value,
-            out_env_vars->hub_sas_key,
-            &(out_env_vars->hub_sas_key));
+            out_env_vars->subscriber_sas_key,
+            &(out_env_vars->subscriber_sas_key));
+
+        out_env_vars->publisher_sas_key = AZ_SPAN_FROM_BUFFER(iot_sample_publisher_sas_key_buffer);
+        read_configuration_entry(
+            IOT_SAMPLE_ENV_PUBLISHER_SAS_KEY,
+            NULL,
+            !show_value,
+            out_env_vars->publisher_sas_key,
+            &(out_env_vars->publisher_sas_key));
 
         char duration_buffer2[IOT_SAMPLE_SAS_KEY_DURATION_TIME_DIGITS];
         az_span duration2 = AZ_SPAN_FROM_BUFFER(duration_buffer2);
