@@ -29,7 +29,6 @@
 #define MAX_TELEMETRY_MESSAGE_COUNT 5
 #define MQTT_TIMEOUT_DISCONNECT_MS (10 * 1000)
 
-const az_span azure_iot_domain_name = AZ_SPAN_LITERAL_FROM_STR("azure-devices.net");
 const az_span azure_iot_api_version = AZ_SPAN_LITERAL_FROM_STR("api-version=2018-06-30");
 const char* mqtt_topic = "test_topic";
 const int mqtt_qos = 0;
@@ -55,14 +54,19 @@ static char publisher_mqtt_password_buffer[256];
 // Functions
 static void create_and_configure_mqtt_clients(void);
 static void connect_mqtt_clients_to_iot_hub(void);
+static void connect_mqtt_client_to_iot_hub(
+    MQTTClient mqtt_client,
+    char* mqtt_username_buffer,
+    char* subscriber_mqtt_password_buffer);
+static void create_and_configure_mqtt_client(az_iot_hub_client* hub_client, az_span device_id, MQTTClient* mqtt_client, char* mqtt_endpoint_url);
 static void subscribe_to_mqtt_topic(void);
 static void send_telemetry_messages_to_iot_hub(void);
 static void disconnect_mqtt_client_from_iot_hub(MQTTClient* mqtt_client);
 static void generate_user_name(
     az_span iot_hub_hostname,
     az_span device_id,
-    char* username_buffer);
-static void generate_sas_key(az_iot_hub_client* hub_client, char* sas_signature_buffer);
+    az_span username);
+static void generate_sas_key(az_iot_hub_client* hub_client, az_span mqtt_pasword);
 
 /*
  * This sample sends five telemetry messages to the Azure IoT Hub. SAS authentication is used.
@@ -90,8 +94,6 @@ int main(void)
 
 static void create_and_configure_mqtt_clients(void)
 {
-  int rc;
-
   // Reads in environment variables set by user for purposes of running sample.
   iot_sample_read_environment_variables(SAMPLE_TYPE, SAMPLE_NAME, &env_vars);
 
@@ -111,7 +113,7 @@ static void create_and_configure_mqtt_client(az_iot_hub_client* hub_client, az_s
   int rc;
 
   // Initialize the Edge clients with the default connection options.
-  rc = az_iot_hub_client_init(hub_client, env_vars.edge_hostname, device_id, NULL);
+  rc = az_iot_hub_client_init(hub_client, env_vars.hub_hostname, device_id, NULL);
   if (az_result_failed(rc))
   {
     IOT_SAMPLE_LOG_ERROR(
@@ -146,14 +148,14 @@ static void create_and_configure_mqtt_client(az_iot_hub_client* hub_client, az_s
 
 static void connect_mqtt_clients_to_iot_hub()
 {
-  generate_user_name(env_vars.hub_hostname, subscriber_device_id, mqtt_client_sub_username_buffer);
-  generate_sas_key(&sub_hub_client, subscriber_mqtt_password_buffer);
+  generate_user_name(env_vars.hub_hostname, subscriber_device_id, AZ_SPAN_FROM_BUFFER(mqtt_client_sub_username_buffer));
+  generate_sas_key(&sub_hub_client, AZ_SPAN_FROM_BUFFER(subscriber_mqtt_password_buffer));
   IOT_SAMPLE_LOG_SUCCESS("Subscriber Client generated SAS Key.");
   connect_mqtt_client_to_iot_hub(
       mqtt_sub_client, mqtt_client_sub_username_buffer, subscriber_mqtt_password_buffer);
 
-  generate_user_name(env_vars.hub_hostname, publisher_device_id, mqtt_client_pub_username_buffer);
-  generate_sas_key(&pub_hub_client, publisher_mqtt_password_buffer);
+  generate_user_name(env_vars.hub_hostname, publisher_device_id, AZ_SPAN_FROM_BUFFER(mqtt_client_pub_username_buffer));
+  generate_sas_key(&pub_hub_client, AZ_SPAN_FROM_BUFFER(publisher_mqtt_password_buffer));
   IOT_SAMPLE_LOG_SUCCESS("Publisher Client generated SAS Key.");
   connect_mqtt_client_to_iot_hub(
       mqtt_pub_client, mqtt_client_pub_username_buffer, publisher_mqtt_password_buffer);
@@ -162,14 +164,14 @@ static void connect_mqtt_clients_to_iot_hub()
 static void connect_mqtt_client_to_iot_hub(
     MQTTClient mqtt_client,
     char* mqtt_username_buffer,
-    char* subscriber_mqtt_password_buffer)
+    char* mqtt_password_buffer)
 {
   int rc;
 
   // Set MQTT connection options.
   MQTTClient_connectOptions mqtt_connect_options = MQTTClient_connectOptions_initializer;
   mqtt_connect_options.username = mqtt_username_buffer;
-  mqtt_connect_options.password = subscriber_mqtt_password_buffer;
+  mqtt_connect_options.password = mqtt_password_buffer;
   mqtt_connect_options.cleansession = false; // Set to false so can receive any pending messages.
   mqtt_connect_options.keepAliveInterval = AZ_IOT_DEFAULT_MQTT_CONNECT_KEEPALIVE_SECONDS;
 
@@ -256,12 +258,9 @@ static void disconnect_mqtt_client_from_iot_hub(MQTTClient* mqtt_client)
   MQTTClient_destroy(mqtt_client);
 }
 
-static void generate_user_name(az_span iot_hub_hostname, az_span device_id, char* username_buffer)
+static void generate_user_name(az_span iot_hub_fqdn, az_span device_id, az_span username)
 {
-  az_span username = AZ_SPAN_FROM_BUFFER(username_buffer);
-  username = az_span_copy(username, iot_hub_hostname);
-  username = az_span_copy_u8(username, '.');
-  username = az_span_copy(username, azure_iot_domain_name);
+  username = az_span_copy(username, iot_hub_fqdn);
   username = az_span_copy_u8(username, '/');
   username = az_span_copy(username, device_id);
   username = az_span_copy_u8(username, '/');
@@ -270,7 +269,7 @@ static void generate_user_name(az_span iot_hub_hostname, az_span device_id, char
   username = az_span_copy_u8(username, '\0');
 }
 
-static void generate_sas_key(az_iot_hub_client* hub_client, char* sas_signature_buffer)
+static void generate_sas_key(az_iot_hub_client* hub_client, az_span mqtt_password)
 {
   az_result rc;
 
@@ -301,12 +300,12 @@ static void generate_sas_key(az_iot_hub_client* hub_client, char* sas_signature_
   // Get the resulting MQTT password, passing the base64 encoded, HMAC signed bytes.
   size_t mqtt_password_length;
   rc = az_iot_hub_client_sas_get_password(
-      &hub_client,
+      hub_client,
       sas_duration,
       sas_base64_encoded_signed_signature,
       AZ_SPAN_EMPTY,
-      subscriber_mqtt_password_buffer,
-      sizeof(subscriber_mqtt_password_buffer),
+      (char*)az_span_ptr(mqtt_password),
+      (size_t)az_span_size(mqtt_password),
       &mqtt_password_length);
   if (az_result_failed(rc))
   {

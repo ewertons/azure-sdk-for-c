@@ -145,7 +145,7 @@ void iot_sample_read_environment_variables(
 
   bool show_value = true;
 
-  if (type == PAHO_IOT_HUB)
+  if (type == PAHO_IOT_HUB || type == PAHO_EDGE_HUB)
   {
     out_env_vars->hub_hostname = AZ_SPAN_FROM_BUFFER(iot_sample_hub_hostname_buffer);
     read_configuration_entry(
@@ -211,56 +211,14 @@ void iot_sample_read_environment_variables(
           exit(rc);
         }
         break;
-
-      default:
-        IOT_SAMPLE_LOG_ERROR("Failed to read environment variables: Hub sample name undefined.");
-        exit(1);
-    }
-  }
-  else if (type == PAHO_EDGE_HUB)
-  {
-    out_env_vars->edge_hostname = AZ_SPAN_FROM_BUFFER(iot_sample_edge_hostname_buffer);
-    read_configuration_entry(
-        IOT_SAMPLE_ENV_EDGE_HOSTNAME,
-        NULL,
-        show_value,
-        out_env_vars->edge_hostname,
-        &(out_env_vars->edge_hostname));
-
-    switch (name)
-    {
-      case PAHO_IOT_HUB_C2D_SAMPLE:
-      case PAHO_IOT_HUB_METHODS_SAMPLE:
-      case PAHO_IOT_HUB_PNP_COMPONENT_SAMPLE:
-      case PAHO_IOT_HUB_PNP_SAMPLE:
-      case PAHO_IOT_HUB_TELEMETRY_SAMPLE:
-      case PAHO_IOT_HUB_TWIN_SAMPLE:
-        out_env_vars->hub_device_id = AZ_SPAN_FROM_BUFFER(iot_sample_hub_device_id_buffer);
+      case PAHO_EDGE_HUB_SAS_MQTT_BROKER_SAMPLE:
+        out_env_vars->edge_hostname = AZ_SPAN_FROM_BUFFER(iot_sample_edge_hostname_buffer);
         read_configuration_entry(
-            IOT_SAMPLE_ENV_HUB_DEVICE_ID,
+            IOT_SAMPLE_ENV_EDGE_HOSTNAME,
             NULL,
             show_value,
-            out_env_vars->hub_device_id,
-            &(out_env_vars->hub_device_id));
-
-        out_env_vars->x509_cert_pem_file_path
-            = AZ_SPAN_FROM_BUFFER(iot_sample_x509_cert_pem_file_path_buffer);
-        read_configuration_entry(
-            IOT_SAMPLE_ENV_DEVICE_X509_CERT_PEM_FILE_PATH,
-            NULL,
-            show_value,
-            out_env_vars->x509_cert_pem_file_path,
-            &(out_env_vars->x509_cert_pem_file_path));
-        break;
-
-      case PAHO_IOT_HUB_SAS_TELEMETRY_SAMPLE:
-        out_env_vars->hub_device_id = AZ_SPAN_FROM_BUFFER(iot_sample_hub_device_id_buffer);
-        read_configuration_entry(
-            IOT_SAMPLE_ENV_HUB_SAS_DEVICE_ID,
-            NULL,
-            show_value,
-            out_env_vars->hub_device_id,
-            &(out_env_vars->hub_device_id));
+            out_env_vars->edge_hostname,
+            &(out_env_vars->edge_hostname));
 
         out_env_vars->hub_sas_key = AZ_SPAN_FROM_BUFFER(iot_sample_hub_sas_key_buffer);
         read_configuration_entry(
@@ -283,7 +241,6 @@ void iot_sample_read_environment_variables(
           exit(rc);
         }
         break;
-
       default:
         IOT_SAMPLE_LOG_ERROR("Failed to read environment variables: Hub sample name undefined.");
         exit(1);
