@@ -130,3 +130,5 @@ if(UNIT_TESTING_MOCKS)
     message(WARNING "UNIT_TESTING_MOCKS will be ignored because UNIT_TESTING is not enabled.")
   endif()
 endif()
+
+add_subdirectory(testapp)
