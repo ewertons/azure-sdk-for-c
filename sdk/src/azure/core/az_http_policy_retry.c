@@ -181,7 +181,7 @@ AZ_NODISCARD az_result az_http_pipeline_policy_retry(
     // Even HTTP 429, or 502 are expected to be AZ_OK, so the failed result is not retriable.
     if (attempt > max_retries || az_result_failed(result))
     {
-      return result;
+      break;
     }
 
     int32_t retry_after_msec = -1;
@@ -193,7 +193,7 @@ AZ_NODISCARD az_result az_http_pipeline_policy_retry(
 
     if (!should_retry)
     {
-      return result;
+      break;
     }
 
     ++attempt;
