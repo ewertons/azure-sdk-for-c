@@ -70,7 +70,7 @@ typedef struct
  *
  * @return #az_iot_provisioning_client_options.
  */
-AZ_NODISCARD az_iot_provisioning_client_options az_iot_provisioning_client_options_default();
+AZ_NODISCARD az_iot_provisioning_client_options az_iot_provisioning_client_options_default(void);
 
 /**
  * @brief Initializes an Azure IoT Provisioning Client.
@@ -482,7 +482,7 @@ typedef struct
  * @return #az_iot_provisioning_client_payload_options.
  */
 AZ_NODISCARD az_iot_provisioning_client_payload_options
-az_iot_provisioning_client_payload_options_default();
+az_iot_provisioning_client_payload_options_default(void);
 
 /**
  * @brief Builds the optional payload for a provisioning request.
